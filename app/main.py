@@ -1,14 +1,118 @@
 import os
+import uuid
+
 import waitress
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, url_for
+from werkzeug.utils import redirect
+
+from app.product import Product, ProductManager, EmptyProduct
 
 
 def start():
     app = Flask(__name__)
 
+    productManager = ProductManager()
+
+    productManager.add(Product(
+        'Сплит-система Comfee MSAFA-07HRN1-QC2',
+        price=12_990,
+        quantity=1
+    ))
+
+    productManager.add(Product(
+        'Сплит-система Haier HSU-09HTM03/R2',
+        price=22_490,
+        quantity=24
+    ))
+
+    productManager.add(Product(
+        'Сплит-система (инвертор) LG P07EP2',
+        price=33_990,
+        quantity=1
+    ))
+
+    productManager.add(Product(
+        'Сплит-система (инвертор) Haier AS09NA6HRA-S',
+        price=27_990,
+        quantity=24
+    ))
+
+    productManager.add(Product(
+        'Сплит-система (инвертор) Comfee MSAFA-09HRDN1-QC2F',
+        price=22_990,
+        quantity=2
+    ))
+
+    productManager.add(Product(
+        'Сплит-система (инвертор) LG PM09SP',
+        price=34_990,
+        quantity=6
+    ))
+
+    productManager.add(Product(
+        'Сплит-система Comfee MSAFB-12HRN1-QC2',
+        price=20_990,
+        quantity=1
+    ))
+
+    product_saved = False
+
     @app.route('/')
     def index():
-        return render_template('index.html')
+        products = productManager.items
+        empty_id = uuid.UUID(int=0)
+        return render_template('index.html', products=products, empty_id=empty_id)
+
+    @app.route('/products/<product_id>/edit')
+    def product_edit(product_id):
+        nonlocal product_saved
+
+        empty_id = str(uuid.UUID(int=0))
+        if product_id == empty_id:
+            product = EmptyProduct()
+        else:
+            product = productManager.search_by_id(product_id)
+
+        is_saved = product_saved
+        product_saved = False
+        return render_template('product-edit.html', product=product, is_saved=is_saved)
+
+    @app.route('/products/<product_id>/save', methods=['POST'])
+    def product_save(product_id):
+        nonlocal product_saved
+
+        name = request.form['name']
+        price = request.form['price']
+        quantity = request.form['quantity']
+
+        empty_id = str(uuid.UUID(int=0))
+        if product_id == empty_id:
+            product = Product(name, price=price, quantity=quantity)
+            productManager.add(product)
+            product_id=product.id
+        else:
+            productManager.update(product_id, name=name, price=price, quantity=quantity)
+
+        product_saved = True
+        return redirect(url_for('product_edit', product_id=product_id))
+
+    @app.route('/products/<product_id>/remove')
+    def product_remove(product_id):
+        productManager.remove_by_id(product_id)
+        return redirect(url_for('index'))
+
+    @app.route('/products/<product_id>/sale')
+    def product_sale(product_id):
+        pass
+
+    @app.route('/sales')
+    def sales():
+        pass
+
+    @app.route('/sales/add')
+    def sale_add():
+        pass
+
 
     if os.getenv('APP_ENV') == 'PROD' and os.getenv('PORT'):
         waitress.serve(app, port=os.getenv('PORT'))
