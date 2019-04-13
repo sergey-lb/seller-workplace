@@ -9,13 +9,16 @@
           integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css"
           integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
-    <title>Products</title>
+    <title>Товары</title>
 </head>
 <body>
 <div class="container">
     <div class="row">
         <div class="col pt-5">
-            <h1 class="mb-4">Товары</h1>
+            <div class="btn-group mb-4">
+                <button type="button" class="btn btn-lg btn-secondary" disabled>Товары</button>
+                <a href="{{url_for('sales')}}" class="btn btn-lg btn-secondary">Продажи</a>
+            </div>
             <div class="mb-3 row">
                 <div class="col-4">
                     <a href="{{url_for('product_edit', product_id=empty_id)}}" class="btn btn-primary"
@@ -122,6 +125,10 @@
                     <td>{{product.price}}</td>
                     <td>{{product.quantity}}</td>
                     <td>
+                        <a href="{{url_for('product_sale', product_id=product.id)}}"
+                           class="btn btn-success mr-5"
+                           title="Оформить продажу"
+                        ><i class="fas fa-shopping-cart"></i></a>
                         <a href="{{url_for('product_edit', product_id=product.id)}}" class="btn btn-primary"
                            title="Редактировать"><i class="fas fa-edit"></i></a>
                         <a href="{{url_for('product_remove', product_id=product.id)}}" class="btn btn-danger"

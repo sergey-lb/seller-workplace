@@ -1,4 +1,4 @@
 [![Build Status]]
 [![codecov]]
 
-# Empty Project
+# Seller Workplace Project

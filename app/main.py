@@ -8,56 +8,61 @@ from flask import Flask, render_template, request, url_for, make_response
 from werkzeug.utils import redirect
 
 from app.product import Product, ProductManager, EmptyProduct
+from app.sale import Sale, SaleManager
 
 
 def start():
     app = Flask(__name__)
 
-    productManager = ProductManager()
+    product_manager = ProductManager()
 
-    productManager.add(Product(
+    product_manager.add(Product(
         'Сплит-система Comfee MSAFA-07HRN1-QC2',
         price=12_990,
         quantity=1
     ))
 
-    productManager.add(Product(
+    product_manager.add(Product(
         'Сплит-система Haier HSU-09HTM03/R2',
         price=22_490,
         quantity=24
     ))
 
-    productManager.add(Product(
+    product_manager.add(Product(
         'Сплит-система (инвертор) LG P07EP2',
         price=33_990,
         quantity=1
     ))
 
-    productManager.add(Product(
+    product_manager.add(Product(
         'Сплит-система (инвертор) Haier AS09NA6HRA-S',
         price=27_990,
         quantity=24
     ))
 
-    productManager.add(Product(
+    product_manager.add(Product(
         'Сплит-система (инвертор) Comfee MSAFA-09HRDN1-QC2F',
         price=22_990,
         quantity=2
     ))
 
-    productManager.add(Product(
+    product_manager.add(Product(
         'Сплит-система (инвертор) LG PM09SP',
         price=34_990,
         quantity=6
     ))
 
-    productManager.add(Product(
+    product_manager.add(Product(
         'Сплит-система Comfee MSAFB-12HRN1-QC2',
         price=20_990,
         quantity=1
     ))
 
+    sale_manager = SaleManager()
+
     product_saved = False
+
+    sale_alert = None;
 
     @app.route('/')
     def index():
@@ -70,13 +75,13 @@ def start():
         if sort_order not in ['asc', 'desc']:
             sort_order = 'asc'
 
-        productManager.sort_items(sort_field, sort_order)
+        product_manager.sort_items(sort_field, sort_order)
 
         search = request.args.get('search')
         if search:
-            products = productManager.search_by_name(search)
+            products = product_manager.search_by_name(search)
         else:
-            products = productManager.items
+            products = product_manager.items
             search=''
 
         empty_id = uuid.UUID(int=0)
@@ -98,7 +103,7 @@ def start():
         if product_id == empty_id:
             product = EmptyProduct()
         else:
-            product = productManager.search_by_id(product_id)
+            product = product_manager.search_by_id(product_id)
 
         is_saved = product_saved
         product_saved = False
@@ -115,43 +120,83 @@ def start():
         empty_id = str(uuid.UUID(int=0))
         if product_id == empty_id:
             product = Product(name, price=price, quantity=quantity)
-            productManager.add(product)
+            product_manager.add(product)
             product_id=product.id
         else:
-            productManager.update(product_id, name=name, price=price, quantity=quantity)
+            product_manager.update(product_id, name=name, price=price, quantity=quantity)
 
         product_saved = True
         return redirect(url_for('product_edit', product_id=product_id))
 
     @app.route('/products/<product_id>/remove')
     def product_remove(product_id):
-        productManager.remove_by_id(product_id)
+        product_manager.remove_by_id(product_id)
         return redirect(url_for('index'))
 
     @app.route('/products/<product_id>/sale')
     def product_sale(product_id):
-        pass
+        nonlocal sale_alert
+
+        alert = sale_alert
+        sale_alert = None
+
+        product = product_manager.search_by_id(product_id)
+        return render_template('product-sale.html', product=product, alert=alert)
 
     @app.route('/sales')
     def sales():
-        pass
+        sales = sale_manager.items
+        return render_template('sales.html', sales=sales)
 
-    @app.route('/sales/add')
+    @app.route('/sales/add', methods=['POST'])
     def sale_add():
-        pass
+        nonlocal sale_alert
+
+        product_id = request.form['product_id']
+        quantity = int(request.form['quantity'])
+
+        product = product_manager.search_by_id(product_id)
+
+        if quantity == 0:
+            sale_alert = {
+                'class': 'danger',
+                'msg': 'Кол-во должно быть больше 0'
+            }
+            return redirect(url_for('product_sale', product_id=product.id))
+
+        if quantity > product.quantity:
+            sale_alert = {
+                'class': 'danger',
+                'msg': 'Недостаточно товара на складе'
+            }
+            return redirect(url_for('product_sale', product_id=product.id))
+
+        product.quantity -= quantity
+
+        sale = Sale(
+            product,
+            quantity
+        )
+        sale_manager.add(sale)
+        sale_alert = {
+            'class': 'success',
+            'msg': 'Продажа проведена'
+        }
+
+        return redirect(url_for('product_sale', product_id=product.id))
 
     @app.route('/products/import', methods=['POST'])
     def products_import():
-        nonlocal productManager
+        nonlocal product_manager
         if 'import-file' not in request.files:
             redirect(url_for('index'))
 
         importFile = request.files['import-file']
         content = io.StringIO(importFile.read().decode("utf8"))
         reader = csv.reader(content, delimiter=';')
-        productManager = ProductManager()
+        product_manager = ProductManager()
         for line in reader:
-            productManager.add(Product(
+            product_manager.add(Product(
                 line[0],
                 price=line[1],
                 quantity=line[2]
@@ -162,7 +207,7 @@ def start():
     def products_export():
         content = io.StringIO()
         writer = csv.writer(content, delimiter=';')
-        products = productManager.items
+        products = product_manager.items
         for product in products:
             writer.writerow([
                 product.name,
