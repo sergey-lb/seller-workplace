@@ -59,6 +59,17 @@ def start():
 
     @app.route('/')
     def index():
+
+        sort_field = request.args.get('sort_field')
+        if sort_field not in ['name', 'price', 'quantity']:
+            sort_field = 'name'
+
+        sort_order = request.args.get('sort_order')
+        if sort_order not in ['asc', 'desc']:
+            sort_order = 'asc'
+
+        productManager.sort_items(sort_field, sort_order)
+
         search = request.args.get('search')
         if search:
             products = productManager.search_by_name(search)
@@ -68,7 +79,14 @@ def start():
 
         empty_id = uuid.UUID(int=0)
 
-        return render_template('index.html', products=products, empty_id=empty_id, search=search)
+        return render_template(
+            'index.html',
+            products=products,
+            empty_id=empty_id,
+            search=search,
+            sort_field=sort_field,
+            sort_order=sort_order
+        )
 
     @app.route('/products/<product_id>/edit')
     def product_edit(product_id):

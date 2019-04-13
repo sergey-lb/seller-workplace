@@ -5,8 +5,10 @@
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css"
+          integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
     <title>Products</title>
 </head>
 <body>
@@ -16,39 +18,88 @@
             <h1 class="mb-4">Товары</h1>
             <div class="mb-3 row">
                 <div class="col-4">
-                    <a href="{{url_for('product_edit', product_id=empty_id)}}" class="btn btn-primary" title="Добавить товар"><i class="fas fa-plus"></i></a>
+                    <a href="{{url_for('product_edit', product_id=empty_id)}}" class="btn btn-primary"
+                       title="Добавить товар"><i class="fas fa-plus"></i></a>
                     <a href="#" class="btn btn-primary" title="Импорт csv"><i class="fas fa-file-import"></i></a>
                     <a href="#" class="btn btn-primary" title="Экспорт csv"><i class="fas fa-file-export"></i></a>
                 </div>
                 <div class="col-8">
                     <form>
-                        <input name="search" class="form-control" placeholder="Поиск по названию" type="search" value="{{search}}">
+                        <input name="search" class="form-control" placeholder="Поиск по названию" type="search"
+                               value="{{search}}">
                     </form>
                 </div>
             </div>
             <table class="table table-hover">
                 <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Название</th>
-                        <th>Цена (руб.)</th>
-                        <th>Кол-во (шт.)</th>
-                        <th></th>
-                    </tr>
+                <tr>
+                    <th>#</th>
+                    <th>
+                        {% if sort_field == 'name' and sort_order == 'asc'%}
+                            <a href="{{url_for('index', sort_field='name', sort_order='desc', search=search)}}">
+                        {% else %}
+                            <a href="{{url_for('index', sort_field='name', sort_order='asc', search=search)}}">
+                        {% endif %}
+                                {% if sort_field == 'name' and sort_order == 'asc'%}
+                                    <i class="fas fa-sort-up"></i>
+                                {% elif sort_field == 'name' and sort_order == 'desc' %}
+                                    <i class="fas fa-sort-down"></i>
+                                {% else %}
+                                    <i class="fas fa-sort"></i>
+                                {% endif %}
+                                Название
+                            </a>
+                    </th>
+                    <th>
+                        {% if sort_field == 'price' and sort_order == 'asc'%}
+                            <a href="{{url_for('index', sort_field='price', sort_order='desc', search=search)}}">
+                        {% else %}
+                            <a href="{{url_for('index', sort_field='price', sort_order='asc', search=search)}}">
+                        {% endif %}
+                                {% if sort_field == 'price' and sort_order == 'asc'%}
+                                    <i class="fas fa-sort-up"></i>
+                                {% elif sort_field == 'price' and sort_order == 'desc' %}
+                                    <i class="fas fa-sort-down"></i>
+                                {% else %}
+                                    <i class="fas fa-sort"></i>
+                                {% endif %}
+                                Цена (руб.)
+                            </a>
+                    </th>
+                    <th>
+                        {% if sort_field == 'quantity' and sort_order == 'asc'%}
+                            <a href="{{url_for('index', sort_field='quantity', sort_order='desc', search=search)}}">
+                        {% else %}
+                            <a href="{{url_for('index', sort_field='quantity', sort_order='asc', search=search)}}">
+                        {% endif %}
+                                {% if sort_field == 'quantity' and sort_order == 'asc'%}
+                                    <i class="fas fa-sort-up"></i>
+                                {% elif sort_field == 'quantity' and sort_order == 'desc' %}
+                                    <i class="fas fa-sort-down"></i>
+                                {% else %}
+                                    <i class="fas fa-sort"></i>
+                                {% endif %}
+                                Кол-во (шт.)
+                            </a>
+                    </th>
+                    <th></th>
+                </tr>
                 </thead>
                 <tbody>
-                    {% for product in products %}
-                        <tr>
-                            <th>{{loop.index}}</th>
-                            <td>{{product.name}}</td>
-                            <td>{{product.price}}</td>
-                            <td>{{product.quantity}}</td>
-                            <td>
-                                <a href="{{url_for('product_edit', product_id=product.id)}}" class="btn btn-primary" title="Редактировать"><i class="fas fa-edit"></i></a>
-                                <a href="{{url_for('product_remove', product_id=product.id)}}" class="btn btn-danger" title="Удалить"><i class="fas fa-trash"></i></a>
-                            </td>
-                        </tr>
-                    {% endfor %}
+                {% for product in products %}
+                <tr>
+                    <th>{{loop.index}}</th>
+                    <td>{{product.name}}</td>
+                    <td>{{product.price}}</td>
+                    <td>{{product.quantity}}</td>
+                    <td>
+                        <a href="{{url_for('product_edit', product_id=product.id)}}" class="btn btn-primary"
+                           title="Редактировать"><i class="fas fa-edit"></i></a>
+                        <a href="{{url_for('product_remove', product_id=product.id)}}" class="btn btn-danger"
+                           title="Удалить"><i class="fas fa-trash"></i></a>
+                    </td>
+                </tr>
+                {% endfor %}
                 </tbody>
             </table>
         </div>
