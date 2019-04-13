@@ -1,8 +1,10 @@
+import csv
+import io
 import os
 import uuid
 
 import waitress
-from flask import Flask, render_template, request, url_for
+from flask import Flask, render_template, request, url_for, make_response
 from werkzeug.utils import redirect
 
 from app.product import Product, ProductManager, EmptyProduct
@@ -138,6 +140,39 @@ def start():
     def sale_add():
         pass
 
+    @app.route('/products/import', methods=['POST'])
+    def products_import():
+        nonlocal productManager
+        if 'import-file' not in request.files:
+            redirect(url_for('index'))
+
+        importFile = request.files['import-file']
+        content = io.StringIO(importFile.read().decode("utf8"))
+        reader = csv.reader(content, delimiter=';')
+        productManager = ProductManager()
+        for line in reader:
+            productManager.add(Product(
+                line[0],
+                price=line[1],
+                quantity=line[2]
+            ))
+        return redirect(url_for('index'))
+
+    @app.route('/products/export')
+    def products_export():
+        content = io.StringIO()
+        writer = csv.writer(content, delimiter=';')
+        products = productManager.items
+        for product in products:
+            writer.writerow([
+                product.name,
+                product.price,
+                product.quantity
+            ])
+        response = make_response(content.getvalue())
+        response.headers['Content-Type'] = 'application/octet-stream'
+        response.headers['Content-Disposition'] = 'inline; filename=exported.csv'
+        return response
 
     if os.getenv('APP_ENV') == 'PROD' and os.getenv('PORT'):
         waitress.serve(app, port=os.getenv('PORT'))

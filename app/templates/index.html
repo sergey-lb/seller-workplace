@@ -20,8 +20,24 @@
                 <div class="col-4">
                     <a href="{{url_for('product_edit', product_id=empty_id)}}" class="btn btn-primary"
                        title="Добавить товар"><i class="fas fa-plus"></i></a>
-                    <a href="#" class="btn btn-primary" title="Импорт csv"><i class="fas fa-file-import"></i></a>
-                    <a href="#" class="btn btn-primary" title="Экспорт csv"><i class="fas fa-file-export"></i></a>
+                    <form id="import-form"
+                          class="d-none"
+                          method="post"
+                          action="{{url_for('products_import')}}"
+                          enctype="multipart/form-data"
+                    >
+                        <input id="import-field"
+                               type="file"
+                               name="import-file"
+                               onchange="document.getElementById('import-form').submit()"
+                        >
+                    </form>
+                    <a href="#"
+                       class="btn btn-primary"
+                       title="Импорт csv"
+                       onclick="open_file_dialog()"
+                    ><i class="fas fa-file-import"></i></a>
+                    <a href="{{url_for('products_export')}}" class="btn btn-primary" title="Экспорт csv"><i class="fas fa-file-export"></i></a>
                 </div>
                 <div class="col-8">
                     <form>
@@ -30,6 +46,19 @@
                     </form>
                 </div>
             </div>
+            <script><!--
+                function open_file_dialog(){
+                    var element = document.getElementById('import-field');
+                    if(element.click){
+                        element.click();
+                    }else if(document.createEvent){
+                        var eventObj = document.createEvent('MouseEvents');
+                        eventObj.initEvent('click',true,true);
+                        element.dispatchEvent(eventObj);
+                    }
+                    return false;
+                }
+            --></script>
             <table class="table table-hover">
                 <thead>
                 <tr>
