@@ -59,9 +59,16 @@ def start():
 
     @app.route('/')
     def index():
-        products = productManager.items
+        search = request.args.get('search')
+        if search:
+            products = productManager.search_by_name(search)
+        else:
+            products = productManager.items
+            search=''
+
         empty_id = uuid.UUID(int=0)
-        return render_template('index.html', products=products, empty_id=empty_id)
+
+        return render_template('index.html', products=products, empty_id=empty_id, search=search)
 
     @app.route('/products/<product_id>/edit')
     def product_edit(product_id):

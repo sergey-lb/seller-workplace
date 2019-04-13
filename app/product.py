@@ -48,7 +48,7 @@ class ProductManager:
         self.items.remove(item)
 
     def search_by_name(self, name):
-        return list(filter(lambda o: name == o.name, self.items))
+        return list(filter(lambda o: name in o.name, self.items))
 
     def search_by_id(self, item_id):
         return list(filter(lambda o: item_id == o.id, self.items))[0]
