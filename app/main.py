@@ -194,13 +194,20 @@ def start():
         importFile = request.files['import-file']
         content = io.StringIO(importFile.read().decode("utf8"))
         reader = csv.reader(content, delimiter=';')
-        product_manager = ProductManager()
         for line in reader:
-            product_manager.add(Product(
-                line[1],
-                price=line[2],
-                quantity=line[3]
-            ))
+            if line[0] != '':
+                product_manager.update(
+                    line[0],
+                    name = line[1],
+                    price = line[2],
+                    quantity = line[3]
+                )
+            else:
+                product_manager.add(Product(
+                    line[1],
+                    price=line[2],
+                    quantity=line[3]
+                ))
         return redirect(url_for('index'))
 
     @app.route('/products/export')
