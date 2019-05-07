@@ -7,6 +7,7 @@ class Sale:
             product,
             quantity=0
     ):
+        self.product_id = product.id
         self.name = product.name
         self.price = product.price
         self.quantity=quantity

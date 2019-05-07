@@ -15,6 +15,7 @@ def test_create_sale():
         quantity
     )
 
+    assert sale.product_id == product.id
     assert sale.name == product.name
     assert sale.price == product.price
     assert sale.quantity == quantity
