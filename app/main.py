@@ -197,9 +197,9 @@ def start():
         product_manager = ProductManager()
         for line in reader:
             product_manager.add(Product(
-                line[0],
-                price=line[1],
-                quantity=line[2]
+                line[1],
+                price=line[2],
+                quantity=line[3]
             ))
         return redirect(url_for('index'))
 
@@ -210,6 +210,7 @@ def start():
         products = product_manager.items
         for product in products:
             writer.writerow([
+                product.id,
                 product.name,
                 product.price,
                 product.quantity
