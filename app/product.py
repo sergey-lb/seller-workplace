@@ -8,8 +8,8 @@ class EmptyProduct:
     def __init__(self):
         self.id = uuid.UUID(int=0)
         self.name = ''
-        self.price = ''
-        self.quantity = ''
+        self.price = 0
+        self.quantity = 0
 
 
 class Product:

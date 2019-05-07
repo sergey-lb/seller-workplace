@@ -9,8 +9,8 @@ def test_create_empty_product():
 
     assert product.id == empty_id
     assert product.name == ''
-    assert product.price == ''
-    assert product.quantity == ''
+    assert product.price == 0
+    assert product.quantity == 0
 
 
 def test_create_product():
