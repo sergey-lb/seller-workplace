@@ -27,7 +27,7 @@ class Db:
     def _add_sorting_part(self, sql, sorting):
         if sorting is None:
             sorting = {
-                'column': 'id',
+                'column': 'counter',
                 'order': 'DESC'
             }
         else:
@@ -88,8 +88,9 @@ class Db:
             if type(item) is not dict:
                 item = item.__dict__
 
-            cols_str = ",".join(item.keys())
+            cols_str = ",".join(item.keys()) + ", counter"
             vals_str = ":" + ", :".join(item.keys())
+            vals_str += f", (SELECT ifnull(MAX(counter),0)+1 FROM {table})"
             sql = f"INSERT INTO {table} ({cols_str}) VALUES({vals_str})"
             cursor = db.cursor();
             cursor.execute(sql, item)

@@ -3,7 +3,8 @@ CREATE TABLE products (
     name TEXT NOT NULL,
     price INTEGER NOT NULL,
     quantity INTEGER NOT NULL,
-    deleted INTEGER NOT NULL DEFAULT 0 CHECK (deleted IN (0,1))
+    deleted INTEGER NOT NULL DEFAULT 0 CHECK (deleted IN (0,1)),
+    counter INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE sales (
@@ -12,5 +13,6 @@ CREATE TABLE sales (
     name TEXT NOT NULL,
     price INTEGER NOT NULL,
     quantity INTEGER NOT NULL,
-    deleted INTEGER NOT NULL DEFAULT 0 CHECK (deleted IN (0,1))
+    deleted INTEGER NOT NULL DEFAULT 0 CHECK (deleted IN (0,1)),
+    counter INTEGER NOT NULL DEFAULT 0
 );
