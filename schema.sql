@@ -1,0 +1,15 @@
+CREATE TABLE products (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    price INTEGER NOT NULL,
+    quantity INTEGER NOT NULL,
+    deleted INTEGER NOT NULL DEFAULT 0 CHECK (is_sent IN (0,1))
+);
+
+CREATE TABLE sales (
+    id TEXT NOT NULL PRIMARY KEY,
+    product_id INTEGER NOT NULL REFERENCES products ON DELETE RESTRICT ON UPDATE RESTRICT,
+    name TEXT NOT NULL,
+    price INTEGER NOT NULL,
+    quantity INTEGER NOT NULL
+);

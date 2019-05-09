@@ -30,29 +30,33 @@ class Product:
 
 
 class ProductManager:
-    def __init__(self):
-        self.items = []
+    def __init__(self, db):
+        self.db = db
+        self.table = 'products'
 
     def add(self, item):
-        self.items.append(item)
+        self.db.insert(self.table, item)
 
     def update(self, item_id, *, name, price, quantity):
-        for item in self.items:
-            if item.id == item_id:
-                item.name = name
-                item.price = int(price)
-                item.quantity = int(quantity)
-                break
+        item = {
+            'id': item_id,
+            'name': name,
+            'price': price,
+            'quantity': quantity
+        }
+        self.db.update(self.table, item)
 
     def remove_by_id(self, item_id):
-        item = list(filter(lambda o: item_id == o.id, self.items))[0]
-        self.items.remove(item)
+        self.db.mark_deleted(self.table, item_id)
 
-    def search_by_name(self, name):
-        return list(filter(lambda o: name.lower() in o.name.lower(), self.items))
+    def get_all(self, sorting):
+        items = self.db.find_all(self.table, sorting)
+        return items
+
+    def search_by_name(self, name, sorting):
+        items = self.db.find_by_column_like(self.table, column='name', value=name, soritng=sorting)
+        return items
 
     def search_by_id(self, item_id):
-        return list(filter(lambda o: item_id == o.id, self.items))[0]
-
-    def sort_items(self, sort_field, sort_order):
-        self.items.sort(key=lambda x: getattr(x, sort_field), reverse=(sort_order == 'desc'))
+        item = self.db.find(self.table, item_id)
+        return item

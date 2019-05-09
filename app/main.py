@@ -2,63 +2,26 @@ import csv
 import io
 import os
 import uuid
+from pathlib import Path
 
 import waitress
 from flask import Flask, render_template, request, url_for, make_response
 from werkzeug.utils import redirect
 
+from app.db import Db
 from app.product import Product, ProductManager, EmptyProduct
 from app.sale import Sale, SaleManager
+
+DATABASE_URL = str(Path(__file__).parent) + '/../db.sqlite'
 
 
 def start():
     app = Flask(__name__)
 
-    product_manager = ProductManager()
+    db = Db(DATABASE_URL)
 
-    product_manager.add(Product(
-        'Сплит-система Comfee MSAFA-07HRN1-QC2',
-        price=12_990,
-        quantity=1
-    ))
-
-    product_manager.add(Product(
-        'Сплит-система Haier HSU-09HTM03/R2',
-        price=22_490,
-        quantity=24
-    ))
-
-    product_manager.add(Product(
-        'Сплит-система (инвертор) LG P07EP2',
-        price=33_990,
-        quantity=1
-    ))
-
-    product_manager.add(Product(
-        'Сплит-система (инвертор) Haier AS09NA6HRA-S',
-        price=27_990,
-        quantity=24
-    ))
-
-    product_manager.add(Product(
-        'Сплит-система (инвертор) Comfee MSAFA-09HRDN1-QC2F',
-        price=22_990,
-        quantity=2
-    ))
-
-    product_manager.add(Product(
-        'Сплит-система (инвертор) LG PM09SP',
-        price=34_990,
-        quantity=6
-    ))
-
-    product_manager.add(Product(
-        'Сплит-система Comfee MSAFB-12HRN1-QC2',
-        price=20_990,
-        quantity=1
-    ))
-
-    sale_manager = SaleManager()
+    product_manager = ProductManager(db)
+    sale_manager = SaleManager(db)
 
     product_saved = False
 
@@ -75,13 +38,16 @@ def start():
         if sort_order not in ['asc', 'desc']:
             sort_order = 'asc'
 
-        product_manager.sort_items(sort_field, sort_order)
+        sorting = {
+            'column': sort_field,
+            'order': sort_order.upper()
+        }
 
         search = request.args.get('search')
         if search:
-            products = product_manager.search_by_name(search)
+            products = product_manager.search_by_name(search, sorting)
         else:
-            products = product_manager.items
+            products = product_manager.get_all(sorting)
             search=''
 
         empty_id = uuid.UUID(int=0)
