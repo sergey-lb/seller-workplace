@@ -27,8 +27,12 @@ def start():
 
     sale_alert = None;
 
+    sort_field='name'
+    sort_order='asc'
+
     @app.route('/')
     def index():
+        nonlocal sort_field, sort_order
 
         sort_field = request.args.get('sort_field')
         if sort_field not in ['name', 'price', 'quantity']:
@@ -111,7 +115,7 @@ def start():
 
     @app.route('/sales')
     def sales():
-        sales = sale_manager.items
+        sales = sale_manager.get_all()
         return render_template('sales.html', sales=sales)
 
     @app.route('/sales/add', methods=['POST'])
@@ -138,6 +142,13 @@ def start():
             return redirect(url_for('product_sale', product_id=product.id))
 
         product.quantity -= quantity
+
+        product_manager.update(
+            product.id,
+            name=product.name,
+            quantity=product.quantity,
+            price=product.price
+        )
 
         sale = Sale(
             product,
@@ -180,7 +191,11 @@ def start():
     def products_export():
         content = io.StringIO()
         writer = csv.writer(content, delimiter=';')
-        products = product_manager.items
+        sorting = {
+            'column': sort_field,
+            'order': sort_order.upper()
+        }
+        products = product_manager.get_all(sorting)
         for product in products:
             writer.writerow([
                 product.id,

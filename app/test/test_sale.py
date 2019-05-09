@@ -1,5 +1,6 @@
 from app.sale import Sale, SaleManager
 from app.product import Product
+from app.test import helpers
 
 
 def test_create_sale():
@@ -34,8 +35,11 @@ def test_sale_manager_add():
         quantity
     )
 
-    sale_manager = SaleManager()
+    db = helpers.get_db()
+    sale_manager = SaleManager(db)
     sale_manager.add(sale)
 
-    assert len(sale_manager.items) == 1
-    assert sale in sale_manager.items
+    results = helpers.extract_ids(sale_manager.get_all())
+
+    assert len(results) == 1
+    assert sale.id in results

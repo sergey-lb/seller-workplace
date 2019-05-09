@@ -1,6 +1,7 @@
 import uuid
 
 from app.product import Product, ProductManager, EmptyProduct
+from app.test import helpers
 
 
 def test_create_empty_product():
@@ -28,17 +29,26 @@ def test_create_product():
 
 
 def test_product_manager_add():
-    manager = ProductManager()
+
+    db = helpers.get_db()
+
+    manager = ProductManager(db)
     product = Product('Сплит-система Comfee MSAFA-07HRN1-QC2', price=12_990, quantity=1)
 
     manager.add(product)
 
-    assert len(manager.items) == 1
-    assert product in manager.items
+    items = manager.get_all()
+    assert len(items) == 1
+    assert product.id == items[0].id
+    assert product.name == items[0].name
+    assert product.price == items[0].price
+    assert product.quantity == items[0].quantity
 
 
 def test_product_manager_update():
-    manager = ProductManager()
+    db = helpers.get_db()
+
+    manager = ProductManager(db)
     product = Product('Сплит-система Comfee MSAFA-07HRN1-QC2', price=12_990, quantity=1)
 
     data = {
@@ -58,17 +68,21 @@ def test_product_manager_update():
 
 
 def test_product_manager_remove_by_id():
-    manager = ProductManager()
+    db = helpers.get_db()
+
+    manager = ProductManager(db)
     product = Product('Сплит-система Comfee MSAFA-07HRN1-QC2', price=12_990, quantity=1)
 
     manager.add(product)
     manager.remove_by_id(product.id)
 
-    assert len(manager.items) == 0
+    assert len(manager.get_all()) == 0
 
 
 def test_product_manager_search_by_name():
-    product_manager = ProductManager()
+    db = helpers.get_db()
+
+    product_manager = ProductManager(db)
 
     comfee_msafa_07 = Product(
         'Сплит-система Comfee MSAFA-07HRN1-QC2',
@@ -119,15 +133,19 @@ def test_product_manager_search_by_name():
     )
     product_manager.add(comfee_msafb_12)
 
-    expected = [lg_p_07, lg_pm_09]
+    expected = [lg_p_07.id, lg_pm_09.id]
+    expected.sort()
 
-    results = product_manager.search_by_name('lg')
+    results = helpers.extract_ids(product_manager.search_by_name('lg'))
+    results.sort()
 
     assert expected == results
 
 
 def test_product_manager_search_by_id():
-    product_manager = ProductManager()
+    db = helpers.get_db()
+
+    product_manager = ProductManager(db)
 
     comfee_msafa_07 = Product(
         'Сплит-система Comfee MSAFA-07HRN1-QC2',
@@ -180,26 +198,28 @@ def test_product_manager_search_by_id():
 
     result = product_manager.search_by_id(lg_pm_09.id)
 
-    assert result == lg_pm_09
+    assert result.id == lg_pm_09.id
 
 
-def test_product_manager_sort_items():
-    product_manager = ProductManager()
+def test_product_manager_sorting():
+    db = helpers.get_db()
+
+    product_manager = ProductManager(db)
 
     product_a = Product(
-        'А',
+        'АА',
         price=10,
         quantity=1
     )
 
     product_b = Product(
-        'Б',
+        'БА',
         price=1,
         quantity=100
     )
 
     product_c = Product(
-        'В',
+        'ВА',
         price=100,
         quantity=10
     )
@@ -208,27 +228,46 @@ def test_product_manager_sort_items():
     product_manager.add(product_a)
     product_manager.add(product_c)
 
-    expected_name_asc = [product_a, product_b, product_c]
-    expected_name_desc = [product_c, product_b, product_a]
-    expected_price_asc = [product_b, product_a, product_c]
-    expected_price_desc = [product_c, product_a, product_b]
-    expected_quantity_asc = [product_a, product_c, product_b]
-    expected_quantity_desc = [product_b, product_c, product_a]
+    sorting_name_asc = {'column': 'name', 'order': 'ASC'}
+    sorting_name_desc = {'column': 'name', 'order': 'DESC'}
+    sorting_price_asc = {'column': 'price', 'order': 'ASC'}
+    sorting_price_desc = {'column': 'price', 'order': 'DESC'}
+    sorting_quantity_asc = {'column': 'quantity', 'order': 'ASC'}
+    sorting_quantity_desc = {'column': 'quantity', 'order': 'DESC'}
 
-    product_manager.sort_items('name', 'asc')
-    assert expected_name_asc == product_manager.items
+    expected_name_asc = [product_a.id, product_b.id, product_c.id]
+    expected_name_desc = [product_c.id, product_b.id, product_a.id]
+    expected_price_asc = [product_b.id, product_a.id, product_c.id]
+    expected_price_desc = [product_c.id, product_a.id, product_b.id]
+    expected_quantity_asc = [product_a.id, product_c.id, product_b.id]
+    expected_quantity_desc = [product_b.id, product_c.id, product_a.id]
 
-    product_manager.sort_items('name', 'desc')
-    assert expected_name_desc == product_manager.items
+    items = helpers.extract_ids(product_manager.get_all(sorting_name_asc))
+    assert expected_name_asc == items
+    items = helpers.extract_ids(product_manager.search_by_name('А', sorting_name_asc))
+    assert expected_name_asc == items
 
-    product_manager.sort_items('price', 'asc')
-    assert expected_price_asc == product_manager.items
+    items = helpers.extract_ids(product_manager.get_all(sorting_name_desc))
+    assert expected_name_desc == items
+    items = helpers.extract_ids(product_manager.search_by_name('А', sorting_name_desc))
+    assert expected_name_desc == items
 
-    product_manager.sort_items('price', 'desc')
-    assert expected_price_desc == product_manager.items
+    items = helpers.extract_ids(product_manager.get_all(sorting_price_asc))
+    assert expected_price_asc == items
+    items = helpers.extract_ids(product_manager.search_by_name('А', sorting_price_asc))
+    assert expected_price_asc == items
 
-    product_manager.sort_items('quantity', 'asc')
-    assert expected_quantity_asc == product_manager.items
+    items = helpers.extract_ids(product_manager.get_all(sorting_price_desc))
+    assert expected_price_desc == items
+    items = helpers.extract_ids(product_manager.search_by_name('А', sorting_price_desc))
+    assert expected_price_desc == items
 
-    product_manager.sort_items('quantity', 'desc')
-    assert expected_quantity_desc == product_manager.items
+    items = helpers.extract_ids(product_manager.get_all(sorting_quantity_asc))
+    assert expected_quantity_asc == items
+    items = helpers.extract_ids(product_manager.search_by_name('А', sorting_quantity_asc))
+    assert expected_quantity_asc == items
+
+    items = helpers.extract_ids(product_manager.get_all(sorting_quantity_desc))
+    assert expected_quantity_desc == items
+    items = helpers.extract_ids(product_manager.search_by_name('А', sorting_quantity_desc))
+    assert expected_quantity_desc == items

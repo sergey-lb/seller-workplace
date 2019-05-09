@@ -24,7 +24,7 @@ class Db:
                 "only alphanumerical characters and underscore in table names is allowed"
             )
 
-    def _process_sorting_data(self, sorting):
+    def _add_sorting_part(self, sql, sorting):
         if sorting is None:
             sorting = {
                 'column': 'id',
@@ -34,7 +34,9 @@ class Db:
             self.validate_table_or_column_name(sorting['column'])
             if sorting['order'] != 'ASC':
                 sorting['order'] = 'DESC'
-        return sorting
+
+        sql += f" ORDER BY {sorting['column']} {sorting['order']}"
+        return sql
 
     def find(self, table, item_id, *, with_deleted=False):
         self.validate_table_or_column_name(table)
@@ -47,26 +49,24 @@ class Db:
 
     def find_all(self, table, sorting=None, *, with_deleted=False):
         self.validate_table_or_column_name(table)
-        sorting = self._process_sorting_data(sorting)
 
         with self._open_db() as db:
             sql = f"SELECT * FROM {table}"
             if not with_deleted:
                 sql += " WHERE deleted=0"
-            sql += f" ORDER BY {sorting['column']} {sorting['order']}"
+            sql = self._add_sorting_part(sql, sorting)
             items = db.cursor().execute(sql).fetchall()
             return items
 
     def find_by_column(self, table, *, column, value, sorting=None, with_deleted=False):
         self.validate_table_or_column_name(table)
         self.validate_table_or_column_name(column)
-        sorting = self._process_sorting_data(sorting)
 
         with self._open_db() as db:
             sql = f"SELECT * FROM {table} WHERE {column} = :value"
             if not with_deleted:
-                sql += " WHERE deleted=0"
-            sql += f" ORDER BY {sorting['column']} {sorting['order']}"
+                sql += " AND deleted=0"
+            sql = self._add_sorting_part(sql, sorting)
             items = db.cursor().execute(sql, {'value': value}).fetchall()
             return items
 
@@ -78,33 +78,37 @@ class Db:
             sql += f" WHERE {column} LIKE :value"
             if not with_deleted:
                 sql += " AND deleted = 0"
-            sql += f" ORDER BY {sorting['column']} {sorting['order']}"
+            sql = self._add_sorting_part(sql, sorting)
             items = db.cursor().execute(sql, {'value': '%' + value + '%'}).fetchall()
             return items
 
-    def insert(self, table, obj):
+    def insert(self, table, item):
         self.validate_table_or_column_name(table)
         with self._open_db() as db:
-            attrs = obj.__dict__
-            cols_str = ",".join(attrs.keys())
-            vals_str = ":" + ", :".join(attrs.keys())
+            if type(item) is not dict:
+                item = item.__dict__
+
+            cols_str = ",".join(item.keys())
+            vals_str = ":" + ", :".join(item.keys())
             sql = f"INSERT INTO {table} ({cols_str}) VALUES({vals_str})"
             cursor = db.cursor();
-            cursor.execute(sql, attrs)
+            cursor.execute(sql, item)
             return cursor.lastrowid
 
-    def update(self, table, obj):
+    def update(self, table, item):
         self.validate_table_or_column_name(table)
         with self._open_db() as db:
-            attrs = obj.__dict__
+            if type(item) is not dict:
+                item = item.__dict__
+
             sql_set = []
-            for key, val in attrs.items():
+            for key in item.keys():
                 if key == 'id':
                     continue
-                sql_set.append(key + ' = :' + val)
+                sql_set.append(key + ' = :' + key)
 
             sql = f"UPDATE {table} SET " + ",".join(sql_set) + " WHERE id = :id"
-            db.cursor().execute(sql, attrs)
+            db.cursor().execute(sql, item)
 
     def mark_deleted(self, table, item_id):
         self.update(table, {
@@ -117,3 +121,10 @@ class Db:
         with self._open_db() as db:
             sql = f"DELETE FROM {table} WHERE id = :id"
             db.cursor().execute(sql, {'id': item_id})
+
+    def raw(self, sql, params=None):
+        with self._open_db() as db:
+            if params is None:
+                params={}
+            stmt=db.cursor().execute(sql, params)
+            return stmt
