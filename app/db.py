@@ -2,7 +2,6 @@ import sqlite3
 
 
 class Db:
-    _instance = None
 
     _url = None
 
